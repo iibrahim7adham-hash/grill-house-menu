@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="صورة برغر">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f5e6d3"/>
+      <stop offset="1" stop-color="#d99a63"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#g)"/>
+  <circle cx="200" cy="200" r="70" fill="#ffffff" fill-opacity="0.22"/>
+  <g transform="translate(200 200)" fill="none" stroke="#fffaf3" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-30 -6h60"/>
+    <path d="M-32 6h64a2 2 0 0 1 2 2 14 14 0 0 1-14 14h-40a14 14 0 0 1-14-14 2 2 0 0 1 2-2z"/>
+    <path d="M-24 -6a24 16 0 0 1 48 0"/>
+  </g>
+</svg>
