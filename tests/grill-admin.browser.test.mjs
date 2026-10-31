@@ -163,6 +163,65 @@ test("public page: ?admin opens the dashboard; a signed-in member gets an «إد
   assert.equal(await page.$eval(".manage-btn", (a) => a.textContent.trim()), "إدارة المطعم");
 });
 
+for (const [label, width, mobile] of [["desktop", 1366, false], ["mobile", 390, true]]) {
+  test(`public page, ${label}: «إدارة المطعم» at the bottom of the drawer opens the dashboard sign-in; only members get in`, { skip: SKIP }, async (t) => {
+    const { page, url, errors, requests } = await open(t, { path: "/", width });
+    if (mobile) await page.setViewport({ width, height: 844, isMobile: true, hasTouch: true });
+
+    // Customer navigation is unchanged; the staff entry sits after it, apart.
+    assert.deepEqual(await page.$$eval(".nav-drawer-links .nav-drawer-link", (l) => l.map((n) => n.textContent.trim())),
+      ["الرئيسية", "المنيو", "عن المطعم", "تواصل معنا", "Instagram"]);
+    const entry = await page.$eval("#nav-drawer .nav-drawer-footer", (footer) => {
+      const link = footer.querySelector("a");
+      return {
+        last: footer === footer.parentElement.lastElementChild,
+        divider: getComputedStyle(footer).borderTopStyle !== "none" && parseFloat(getComputedStyle(footer).borderTopWidth) > 0,
+        insideCustomerNav: Boolean(footer.closest(".nav-drawer-links")),
+        icon: link.querySelector("use").getAttribute("href"),
+        lockDefined: Boolean(document.getElementById("icon-lock")),
+        href: link.getAttribute("href"),
+        text: link.textContent.trim(),
+        links: footer.querySelectorAll("a").length,
+      };
+    });
+    assert.deepEqual(entry, { last: true, divider: true, insideCustomerNav: false, icon: "#icon-lock", lockDefined: true,
+      href: "/grill-admin/", text: "إدارة المطعم", links: 1 });
+    assert.ok(!requests.some((u) => u.includes("/grill-admin/")), "dashboard not loaded before the click");
+
+    // Open the drawer: the entry is visible at the bottom of the panel.
+    await page.click("#hamburger-btn");
+    await page.waitForSelector("#nav-drawer:not([hidden])");
+    const box = await page.evaluate(() => {
+      const panel = document.querySelector(".nav-drawer-panel").getBoundingClientRect();
+      const link = document.getElementById("nav-admin-link").getBoundingClientRect();
+      const last = document.querySelector(".nav-drawer-links").getBoundingClientRect();
+      return { visible: link.width > 0 && link.height > 0, inPanel: link.left >= panel.left - 1 && link.right <= panel.right + 1,
+        nearBottom: panel.bottom - link.bottom < 40, belowCustomer: link.top >= last.bottom };
+    });
+    assert.deepEqual(box, { visible: true, inPanel: true, nearBottom: true, belowCustomer: true });
+
+    // Same-domain navigation to the dashboard, which asks a visitor to sign in.
+    await Promise.all([page.waitForNavigation({ waitUntil: "networkidle0" }), page.click("#nav-admin-link")]);
+    assert.equal(page.url(), url + "/grill-admin/");
+    await page.waitForSelector("#view-login:not([hidden])");
+    assert.equal(await page.$eval("#view-app", (n) => n.hidden), true);
+    assert.equal(await page.$$eval("#section *", (n) => n.length), 0, "no dashboard content before sign-in");
+
+    // A signed-in account that is not a Grill House member is refused.
+    await signIn(page, USERS.other);
+    await page.waitForSelector("#login-message:not([hidden])");
+    assert.match(await page.$eval("#login-message", (n) => n.textContent), /لا يملك صلاحية إدارة مطعم GRILL HOUSE/);
+    await until(async () => !(await sessionStored(page)), "unauthorized session cleared");
+    assert.equal(await page.$eval("#view-app", (n) => n.hidden), true);
+
+    // The Grill House owner gets in.
+    await signIn(page, USERS.admin);
+    await page.waitForSelector(".nav-card");
+    assert.equal(await page.$eval("#view-login", (n) => n.hidden), true);
+    assert.deepEqual(errors, []);
+  });
+}
+
 // ---------- sign-in ----------
 
 test("sign-in: a wrong password is rejected", { skip: SKIP }, async (t) => {

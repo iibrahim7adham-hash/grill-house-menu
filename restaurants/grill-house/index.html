@@ -125,6 +125,11 @@
           <circle cx="8.5" cy="9.5" r="1.5" fill="currentColor" stroke="none" />
           <path d="M21 16.5 15.6 11a2 2 0 0 0-2.8 0L3 20" />
         </symbol>
+        <symbol id="icon-lock" viewBox="0 0 24 24">
+          <rect x="5" y="11" width="14" height="10" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+          <path d="M12 15v2" />
+        </symbol>
       </defs>
     </svg>
 
@@ -920,6 +925,16 @@
             <span>Instagram</span>
           </a>
         </nav>
+        <!-- Staff entry: opens the dashboard, which has its own sign-in and
+             admits Grill House members only (checked by the database). -->
+        <div class="nav-drawer-footer">
+          <a href="/grill-admin/" class="nav-drawer-link" id="nav-admin-link" rel="nofollow">
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-lock"></use>
+            </svg>
+            <span>إدارة المطعم</span>
+          </a>
+        </div>
       </div>
     </div>
 
