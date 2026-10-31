@@ -252,6 +252,19 @@ p {
   color: var(--ivory);
 }
 
+.boot-error {
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  max-width: 26rem;
+  padding: 1rem 1.2rem;
+  text-align: center;
+}
+
+.boot-error[hidden] {
+  display: none;
+}
+
 .auth-card {
   width: min(27rem, 100%);
   display: grid;

@@ -222,6 +222,81 @@ for (const [label, width, mobile] of [["desktop", 1366, false], ["mobile", 390, 
   });
 }
 
+// ---------- start-up: the session check always ends on a usable screen ----------
+
+const visibleView = (page) => page.evaluate(() => ["loading", "login", "app"].find((v) => !document.getElementById("view-" + v).hidden));
+// Signs in inside the page through the real client, as a returning visitor would have.
+const storeSession = (page, user) => page.evaluate(async (u) => {
+  const { supabase } = await import("/shared/supabase/client.js");
+  const { error } = await supabase.auth.signInWithPassword(u);
+  return error && error.message;
+}, user);
+
+test("start-up: signed out -> the sign-in form, no message", { skip: SKIP }, async (t) => {
+  const { page, errors } = await open(t);
+  await page.waitForSelector("#view-login:not([hidden])", { timeout: 5000 });
+  assert.equal(await page.$eval("#login-message", (n) => n.hidden), true);
+  assert.equal(await page.$eval("#boot-error", (n) => n.hidden), true);
+  assert.deepEqual(errors, []);
+});
+
+test("start-up: a stored Grill House owner session opens the dashboard directly", { skip: SKIP }, async (t) => {
+  const { page, errors } = await open(t);
+  await page.waitForSelector("#view-login:not([hidden])");
+  assert.equal(await storeSession(page, USERS.admin), null);
+  await page.reload({ waitUntil: "networkidle0" });
+  await page.waitForSelector(".nav-card", { timeout: 5000 });
+  assert.equal(await visibleView(page), "app");
+  assert.deepEqual(errors, []);
+});
+
+test("start-up: a stored session of a non-member is refused and signed out", { skip: SKIP }, async (t) => {
+  const { page, fake } = await open(t);
+  await page.waitForSelector("#view-login:not([hidden])");
+  assert.equal(await storeSession(page, USERS.other), null);
+  await page.reload({ waitUntil: "networkidle0" });
+  await page.waitForSelector("#login-message:not([hidden])", { timeout: 5000 });
+  assert.match(await page.$eval("#login-message", (n) => n.textContent), /لا يملك صلاحية إدارة مطعم GRILL HOUSE/);
+  await until(async () => !(await sessionStored(page)), "session cleared");
+  assert.ok(fake.log.some((l) => l.path.startsWith("/auth/v1/logout")));
+  assert.equal(await visibleView(page), "login");
+});
+
+test("start-up: a dashboard file that fails to load shows an error with retry, not an endless loading screen", { skip: SKIP }, async (t) => {
+  const { page } = await open(t);
+  await page.setRequestInterception(true);
+  page.on("request", (r) => {
+    if (r.isInterceptResolutionHandled()) return;
+    if (r.url().endsWith("/shared/supabase/client.js")) r.respond({ status: 404, contentType: "text/plain", body: "Not found" });
+    else r.continue();
+  });
+  const started = Date.now();
+  await page.reload();
+  await page.waitForSelector("#boot-error:not([hidden])", { timeout: 5000 });
+  assert.ok(Date.now() - started < 5000, "reported right away");
+  assert.equal(await page.$eval("#boot-status", (n) => n.hidden), true);
+  assert.match(await page.$eval("#boot-error", (n) => n.textContent), /تعذر تحميل لوحة التحكم/);
+  assert.equal(await visibleView(page), "loading");
+  assert.ok(await page.$("#boot-retry"));
+});
+
+test("start-up: an Auth server that never answers ends on the sign-in form with a message", { skip: SKIP, timeout: 60000 }, async (t) => {
+  const { page } = await open(t);
+  await page.waitForSelector("#view-login:not([hidden])");
+  assert.equal(await storeSession(page, USERS.admin), null);
+  await page.setRequestInterception(true);
+  page.on("request", (r) => {
+    if (r.isInterceptResolutionHandled()) return;
+    if (r.url().includes("/auth/v1/user")) return; // left unanswered
+    r.continue();
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  assert.equal(await visibleView(page), "loading");
+  await page.waitForSelector("#view-login:not([hidden])", { timeout: 25000 });
+  assert.match(await page.$eval("#login-message", (n) => n.textContent), /تعذر الاتصال بالخادم/);
+  assert.equal(await page.$eval("#boot-error", (n) => n.hidden), true, "the guard did not need to step in");
+});
+
 // ---------- sign-in ----------
 
 test("sign-in: a wrong password is rejected", { skip: SKIP }, async (t) => {

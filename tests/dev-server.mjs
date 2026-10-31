@@ -9,10 +9,12 @@
 //            --without-socials-function (mock: behave as before the
 //            owner_update_restaurant_socials migration)
 //
-// Like the deployment (.vercelignore), _archive/, tests/, supabase/ and dot
-// files are not served.
+// Like the deployment, files excluded by .vercelignore (read and matched the
+// way Vercel does, see vercelIgnored) and dot files are not served, so a
+// pattern that drops a file the site needs breaks the tests too.
 
 import http from "node:http";
+import { readFileSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -25,7 +27,38 @@ const TYPES = {
   ".css": "text/css; charset=utf-8", ".json": "application/json", ".svg": "image/svg+xml",
   ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".ico": "image/x-icon",
 };
-const BLOCKED = /^\/(?:_archive|tests|supabase|node_modules)(?:\/|$)|\/\./;
+const BLOCKED = /^\/node_modules(?:\/|$)|\/\./;
+
+// .vercelignore uses .gitignore rules: a pattern starting with "/" or
+// containing an inner "/" matches from the project root; any other pattern
+// matches a file or folder of that name at ANY depth ("supabase/" also
+// matches shared/supabase/). A trailing "/" matches folders only; "*" is any
+// run of characters within one path segment.
+export function parseIgnore(text) {
+  return text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith("#")).map((line) => {
+    const dirOnly = line.endsWith("/");
+    let pattern = dirOnly ? line.slice(0, -1) : line;
+    const anchored = pattern.startsWith("/") || pattern.includes("/");
+    pattern = pattern.replace(/^\//, "");
+    const re = new RegExp("^" + pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^/]*") + "$");
+    return { anchored, dirOnly, re };
+  });
+}
+
+// `rel` is a project-relative file path, e.g. "shared/supabase/client.js".
+export function vercelIgnored(rules, rel) {
+  const parts = rel.split("/").filter(Boolean);
+  return rules.some(({ anchored, dirOnly, re }) => {
+    for (let i = 1; i <= parts.length; i++) {
+      const isDir = i < parts.length;
+      if (dirOnly && !isDir) continue;
+      if (anchored ? re.test(parts.slice(0, i).join("/")) : re.test(parts[i - 1])) return true;
+    }
+    return false;
+  });
+}
+
+const IGNORE_RULES = parseIgnore(readFileSync(new URL("../.vercelignore", import.meta.url), "utf8"));
 
 function rewrite(pathname) {
   if (pathname === "/") return "/restaurants/grill-house/index.html";
@@ -53,7 +86,7 @@ export async function startServer({ mock = false, port = 0, itemVisibility = fal
       }
 
       let file = rewrite(decodeURIComponent(url.pathname));
-      if (BLOCKED.test(file)) throw Object.assign(new Error("blocked"), { code: "ENOENT" });
+      if (BLOCKED.test(file) || vercelIgnored(IGNORE_RULES, file)) throw Object.assign(new Error("blocked"), { code: "ENOENT" });
       let full = path.join(ROOT, file);
       if (!full.startsWith(ROOT)) throw Object.assign(new Error("outside"), { code: "ENOENT" });
       if ((await stat(full)).isDirectory()) {

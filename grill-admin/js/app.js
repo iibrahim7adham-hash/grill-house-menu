@@ -28,6 +28,7 @@ const LOGIN_MESSAGES = {
   network: NETWORK,
   generic: "تعذر تسجيل الدخول. يرجى المحاولة مجدداً.",
   notAuthorized: "هذا الحساب لا يملك صلاحية إدارة مطعم GRILL HOUSE. تم تسجيل الخروج.",
+  sessionCheckFailed: "تعذر التحقق من الجلسة السابقة. يرجى تسجيل الدخول.",
   signedOut: "تم تسجيل الخروج.",
   checking: "جارٍ التحقق…",
   submit: "تسجيل الدخول",
@@ -94,12 +95,27 @@ let current = null;
 let busy = false;
 let loadToken = 0;
 
+// Upper bound for one round of Auth / database calls. supabase-js can wait
+// indefinitely (an unanswered request, its internal session lock), and no
+// screen may wait forever.
+const REQUEST_TIMEOUT_MS = 15000;
+
+function withTimeout(promise, ms = REQUEST_TIMEOUT_MS) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error("Timed out after " + ms + " ms"), { code: "timeout" })), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 // ---------- Views ----------
 
 function showView(name) {
   el.loading.hidden = name !== "loading";
   el.login.hidden = name !== "login";
   el.app.hidden = name !== "app";
+  // Start-up reached a usable screen: stop the guard in index.html.
+  if (name !== "loading" && window.grillAdminBoot) window.grillAdminBoot.done();
 }
 
 function showLogin(message, kind) {
@@ -124,8 +140,18 @@ async function enterApp(access) {
   el.email.title = access.user.email || "";
   showView("app");
   el.section.replaceChildren(h("p", { className: "muted", textContent: "جارٍ تحميل البيانات…" }));
-  ctx.withVisibility = await supportsItemVisibility(supabase);
-  await reload();
+  try {
+    ctx.withVisibility = await withTimeout(supportsItemVisibility(supabase));
+  } catch (error) {
+    console.error(error);
+    ctx.withVisibility = false;
+  }
+  try {
+    await withTimeout(reload());
+  } catch (error) {
+    console.error(error);
+    toast("تعذر تحميل البيانات. يرجى المحاولة مجدداً.", "error");
+  }
   renderSection(false);
 }
 
@@ -254,14 +280,14 @@ async function handleLogin(event) {
   el.loginSubmit.disabled = true;
   el.loginSubmit.textContent = LOGIN_MESSAGES.checking;
   try {
-    const { error } = await signIn(supabase, email, password);
+    const { error } = await withTimeout(signIn(supabase, email, password));
     if (error) {
       setAlert(el.loginMessage, LOGIN_MESSAGES[signInErrorReason(error)] || LOGIN_MESSAGES.generic);
       return;
     }
-    const access = await getRestaurantAccess(supabase, SLUG);
+    const access = await withTimeout(getRestaurantAccess(supabase, SLUG));
     if (access.role !== "owner" || !access.restaurant) {
-      await signOut(supabase);
+      await withTimeout(signOut(supabase)).catch(() => {});
       el.loginForm.elements.namedItem("password").value = "";
       setAlert(el.loginMessage, LOGIN_MESSAGES.notAuthorized);
       return;
@@ -307,21 +333,31 @@ function bindEvents() {
   });
 }
 
+// What the stored session (if any) may do here: null when there is no valid
+// session, otherwise the result of getRestaurantAccess().
+async function checkStoredSession() {
+  if (!(await hasStoredSession(supabase))) return null;
+  const user = await getVerifiedUser(supabase);
+  if (!user) return null;
+  return getRestaurantAccess(supabase, SLUG);
+}
+
+// Always ends on the sign-in form or the dashboard: errors and timeouts
+// lead to the sign-in form with a message.
 async function start() {
   bindEvents();
   showView("loading");
+  let access = null;
   try {
-    if (await hasStoredSession(supabase)) {
-      const user = await getVerifiedUser(supabase);
-      if (user) {
-        const access = await getRestaurantAccess(supabase, SLUG);
-        if (access.role === "owner" && access.restaurant) return await enterApp(access);
-        await signOut(supabase);
-        return showLogin(LOGIN_MESSAGES.notAuthorized);
-      }
-    }
+    access = await withTimeout(checkStoredSession());
   } catch (error) {
     console.error(error);
+    return showLogin(error.code === "timeout" ? LOGIN_MESSAGES.network : LOGIN_MESSAGES.sessionCheckFailed);
+  }
+  if (access && access.role === "owner" && access.restaurant) return enterApp(access);
+  if (access && access.user) {
+    await withTimeout(signOut(supabase)).catch(() => {});
+    return showLogin(LOGIN_MESSAGES.notAuthorized);
   }
   showLogin("");
 }

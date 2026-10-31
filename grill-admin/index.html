@@ -48,7 +48,11 @@
 
     <!-- Shown while the stored session is checked. -->
     <main class="auth-screen" id="view-loading" aria-live="polite">
-      <p class="auth-loading">جارٍ التحقق من الجلسة…</p>
+      <p class="auth-loading" id="boot-status">جارٍ التحقق من الجلسة…</p>
+      <div class="auth-loading boot-error" id="boot-error" role="alert" hidden>
+        <p>تعذر تحميل لوحة التحكم. تحقق من الاتصال بالإنترنت ثم أعد المحاولة.</p>
+        <button type="button" class="btn btn-primary" id="boot-retry">إعادة المحاولة</button>
+      </div>
     </main>
 
     <main class="auth-screen" id="view-login" hidden>
@@ -134,6 +138,36 @@
       </div>
     </div>
 
-    <script type="module" src="/grill-admin/js/app.js"></script>
+    <!-- Start-up guard: the loading screen never stays forever. If the
+         dashboard's code cannot load (a missing file, a blocked CDN) or does
+         not reach the sign-in form or the dashboard within BOOT_TIMEOUT_MS,
+         an error with a retry button replaces it. app.js calls
+         window.grillAdminBoot.done() once it has shown either view. -->
+    <script>
+      (function () {
+        var BOOT_TIMEOUT_MS = 20000;
+        var settled = false;
+        function fail() {
+          if (settled) return;
+          settled = true;
+          document.getElementById("boot-status").hidden = true;
+          document.getElementById("boot-error").hidden = false;
+        }
+        var timer = setTimeout(fail, BOOT_TIMEOUT_MS);
+        window.grillAdminBoot = {
+          done: function () { settled = true; clearTimeout(timer); },
+          fail: fail,
+        };
+        document.getElementById("boot-retry").addEventListener("click", function () {
+          window.location.reload();
+        });
+      })();
+    </script>
+    <script type="module">
+      import("/grill-admin/js/app.js").catch(function (error) {
+        console.error("Dashboard failed to load", error);
+        window.grillAdminBoot.fail();
+      });
+    </script>
   </body>
 </html>
