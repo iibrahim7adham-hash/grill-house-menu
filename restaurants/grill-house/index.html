@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GRILL HOUSE — قائمة الطعام</title>
+    <!-- This page's restaurant in the shared database (restaurants.slug).
+         The menu below is the built-in copy; script.js replaces it with the
+         published menu from the database when available. -->
+    <meta name="restaurant-slug" content="grill-house" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/restaurants/grill-house/style.css" />
+  </head>
+  <body>
+    <!-- Full-page background layer: sits behind all content. No image is
+         set yet — see .page-background in style.css for where to add one. -->
+    <div class="page-background" aria-hidden="true"></div>
+
+    <!-- Icon sprite: reused everywhere via <use href="#icon-name"> -->
+    <svg class="icon-sprite" aria-hidden="true">
+      <defs>
+        <symbol id="icon-menu" viewBox="0 0 24 24">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </symbol>
+        <symbol id="icon-phone" viewBox="0 0 24 24">
+          <path
+            d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C11.6 21 3 12.4 3 2c0-.6.4-1 1-1h3.2c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.2 1L6.6 10.8z"
+          />
+        </symbol>
+        <symbol id="icon-flame" viewBox="0 0 24 24">
+          <path
+            d="M12 2c1.4 2.6-1.6 3.8-1.6 6.8a3.6 3.6 0 0 0 7.2 0c0-1.3-.6-2.1-1-2.6.1 1.3-.7 1.9-.7 1.9.4-2.6-1.7-3.6-1.9-5.4-.8 1-2 1.8-2 -.7z"
+          />
+          <path d="M8.4 13a5.6 5.6 0 1 0 11.2 0c0-1-.3-1.8-.6-2.4" />
+        </symbol>
+        <symbol id="icon-bowl" viewBox="0 0 24 24">
+          <path d="M3 12h18a9 9 0 0 1-18 0z" />
+          <path d="M8 12V7a4 4 0 0 1 8 0v5" />
+        </symbol>
+        <symbol id="icon-skewer" viewBox="0 0 24 24">
+          <line x1="4" y1="20" x2="20" y2="4" />
+          <circle cx="8" cy="16" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+          <circle cx="16" cy="8" r="1.5" fill="currentColor" stroke="none" />
+        </symbol>
+        <symbol id="icon-burger" viewBox="0 0 24 24">
+          <path d="M4 10h16" />
+          <path
+            d="M3 14h18a1 1 0 0 1 1 1 4 4 0 0 1-4 4H6a4 4 0 0 1-4-4 1 1 0 0 1 1-1z"
+          />
+          <path d="M5 10a7 5 0 0 1 14 0" />
+        </symbol>
+        <symbol id="icon-pizza" viewBox="0 0 24 24">
+          <path d="M12 2 22 20H2L12 2z" />
+          <circle cx="11" cy="12" r="1" fill="currentColor" stroke="none" />
+          <circle cx="14.5" cy="16" r="1" fill="currentColor" stroke="none" />
+          <circle cx="8.5" cy="16" r="1" fill="currentColor" stroke="none" />
+        </symbol>
+        <symbol id="icon-cup" viewBox="0 0 24 24">
+          <path
+            d="M6 3h12l-1.2 15.2a3 3 0 0 1-3 2.8h-3.6a3 3 0 0 1-3-2.8L6 3z"
+          />
+          <path d="M8 8h8" />
+        </symbol>
+        <symbol id="icon-cake" viewBox="0 0 24 24">
+          <path d="M4 21v-7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7" />
+          <path d="M4 21h16" />
+          <path d="M8 12V9" />
+          <path d="M12 12V9" />
+          <path d="M16 12V9" />
+          <path d="M8 9c0-.9.6-1.3.6-2.1S8 5 8 5" />
+          <path d="M12 9c0-.9.6-1.3.6-2.1S12 5 12 5" />
+          <path d="M16 9c0-.9.6-1.3.6-2.1S16 5 16 5" />
+        </symbol>
+        <symbol id="icon-home" viewBox="0 0 24 24">
+          <path d="M3 11 12 3l9 8" />
+          <path d="M5 10v10h14V10" />
+        </symbol>
+        <symbol id="icon-list" viewBox="0 0 24 24">
+          <path d="M9 6h12M9 12h12M9 18h12" />
+          <path d="M4 6h.01M4 12h.01M4 18h.01" />
+        </symbol>
+        <symbol id="icon-info" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8h.01" />
+          <path d="M11 11.5h1.2v5.5" />
+        </symbol>
+        <symbol id="icon-contact" viewBox="0 0 24 24">
+          <path
+            d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+          />
+        </symbol>
+        <symbol id="icon-pin" viewBox="0 0 24 24">
+          <path d="M12 22s7-6.6 7-12a7 7 0 1 0-14 0c0 5.4 7 12 7 12z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </symbol>
+        <symbol id="icon-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3.2 2" />
+        </symbol>
+        <symbol id="icon-arrow-down" viewBox="0 0 24 24">
+          <path d="M6 9l6 6 6-6" />
+        </symbol>
+        <symbol id="icon-facebook" viewBox="0 0 24 24">
+          <path
+            d="M14 9h3V6h-3a4 4 0 0 0-4 4v2H7v3h3v6h3v-6h3l1-3h-4v-2a1 1 0 0 1 1-1z"
+          />
+        </symbol>
+        <symbol id="icon-instagram" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+          <circle cx="12" cy="12" r="4" />
+          <circle cx="17.3" cy="6.7" r="1" fill="currentColor" stroke="none" />
+        </symbol>
+        <symbol id="icon-tiktok" viewBox="0 0 24 24">
+          <path d="M14 3v10.8a3.6 3.6 0 1 1-2.2-3.3" />
+          <path d="M14 3c.3 2.2 1.9 3.9 4.2 4.2" />
+        </symbol>
+        <symbol id="icon-whatsapp" viewBox="0 0 24 24">
+          <path d="M4 20l1.3-3.9A8.5 8.5 0 1 1 8.1 18.8z" />
+          <path d="M9.2 8.6c.2-.5.6-.6 1-.5l.9 2-.7.9a5.4 5.4 0 0 0 2.6 2.6l.9-.7 2 .9c.1.4 0 .8-.5 1-2.9 1.1-7.3-3.3-6.2-6.2z" />
+        </symbol>
+        <symbol id="icon-image" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <circle cx="8.5" cy="9.5" r="1.5" fill="currentColor" stroke="none" />
+          <path d="M21 16.5 15.6 11a2 2 0 0 0-2.8 0L3 20" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div id="top"></div>
+
+    <header class="site-header">
+      <div class="header-inner container">
+        <a class="btn btn-outline contact-btn" href="tel:+9647501234567" data-profile="phone-link">
+          <svg class="icon" width="18" height="18">
+            <use href="#icon-phone"></use>
+          </svg>
+          <span>اتصل بنا</span>
+        </a>
+
+        <div class="brand">
+          <svg class="icon brand-flame" width="20" height="20">
+            <use href="#icon-flame"></use>
+          </svg>
+          <span class="brand-name" data-profile="name">GRILL HOUSE</span>
+          <span class="brand-est">EST. 2024</span>
+        </div>
+
+        <button
+          class="icon-btn menu-btn"
+          id="hamburger-btn"
+          type="button"
+          aria-label="فتح القائمة الجانبية"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="nav-drawer"
+        >
+          <svg class="icon" width="22" height="22">
+            <use href="#icon-menu"></use>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero" id="hero">
+      <div class="hero-media">
+        <div
+          class="hero-image image-slot"
+          role="img"
+          aria-label="أطباق مشوية شهية من مطعم GRILL HOUSE"
+        >
+          <img
+            src="/restaurants/grill-house/assets/hero/hero.webp"
+            alt="أطباق مشوية شهية من مطعم GRILL HOUSE"
+            loading="lazy"
+          />
+        </div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content" data-profile="tagline"></div>
+      </div>
+    </section>
+
+    <nav class="category-nav" id="categories" aria-label="تصنيفات القائمة">
+      <ul class="category-list container">
+        <li>
+          <a
+            href="#appetizers"
+            class="category-link is-active"
+            data-category="appetizers"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-bowl"></use></svg
+            ><span>المقبلات</span></a
+          >
+        </li>
+        <li>
+          <a
+            href="#main-dishes"
+            class="category-link"
+            data-category="main-dishes"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-skewer"></use></svg
+            ><span>المشويات</span></a
+          >
+        </li>
+        <li>
+          <a href="#burgers" class="category-link" data-category="burgers"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-burger"></use></svg
+            ><span>البرغر</span></a
+          >
+        </li>
+        <li>
+          <a href="#pizza" class="category-link" data-category="pizza"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-pizza"></use></svg
+            ><span>البيتزا</span></a
+          >
+        </li>
+        <li>
+          <a href="#drinks" class="category-link" data-category="drinks"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-cup"></use></svg
+            ><span>المشروبات</span></a
+          >
+        </li>
+        <li>
+          <a href="#desserts" class="category-link" data-category="desserts"
+            ><svg class="icon" width="20" height="20">
+              <use href="#icon-cake"></use></svg
+            ><span>الحلويات</span></a
+          >
+        </li>
+      </ul>
+    </nav>
+
+    <main class="container" id="menu-items">
+      <section class="menu-section" id="appetizers">
+        <div class="section-heading">
+          <h2>المقبلات</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="appetizers">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>حمص</h3>
+              <p>
+                حمص كريمي معد طازجاً، يقدم بزيت الزيتون وصنوبر محمص مع خبز
+                التنور.
+              </p>
+            </div>
+            <div class="menu-card-image image-slot" role="img" aria-label="حمص">
+              <img
+                src="/restaurants/grill-house/assets/appetizers/hummus.webp"
+                alt="حمص"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">4,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>بروشيتا</h3>
+              <p>خبز محمص مقرمش مع طماطم طازجة وريحان وثوم وزيت الزيتون.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="بروشيتا"
+            >
+              <img
+                src="/restaurants/grill-house/assets/appetizers/bruschetta.webp"
+                alt="بروشيتا"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">5,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>ناتشوز</h3>
+              <p>
+                رقائق ناتشوز مقرمشة مغطاة بالجبن الذائب والصلصة الحارة
+                والجواكامولي.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="ناتشوز"
+            >
+              <img
+                src="/restaurants/grill-house/assets/appetizers/nachos.webp"
+                alt="ناتشوز"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">6,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>سلطة سيزر</h3>
+              <p>
+                خس طازج مع صلصة السيزر وقطع الدجاج المشوي ورقائق الجبن والخبز
+                المحمص.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="سلطة سيزر"
+            >
+              <img
+                src="/restaurants/grill-house/assets/appetizers/caesar-salad.webp"
+                alt="سلطة سيزر"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">6,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="menu-section" id="main-dishes">
+        <div class="section-heading">
+          <h2>المشويات</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="main-dishes">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>مشاوي مشكلة</h3>
+              <p>
+                تشكيلة من ألذ المشاوي المشوية على الفحم، تقدم مع الأرز والخضار
+                المشوية.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="مشاوي مشكلة"
+            >
+              <img
+                src="/restaurants/grill-house/assets/grills/mixed-grill-platter.webp"
+                alt="مشاوي مشكلة"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">22,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>فيليه لحم مشوي</h3>
+              <p>قطعة فيليه طرية مشوية على الفحم مع صلصة الفلفل الأسود.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="فيليه لحم مشوي"
+            >
+              <img
+                src="/restaurants/grill-house/assets/grills/grilled-beef-fillet.webp"
+                alt="فيليه لحم مشوي"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">25,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>شيش طاووق</h3>
+              <p>مكعبات دجاج متبلة بخلطة الشيش التقليدية ومشوية على الفحم.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="شيش طاووق"
+            >
+              <img
+                src="/restaurants/grill-house/assets/grills/shish-tawook.webp"
+                alt="شيش طاووق"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">15,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>دجاج مشوي</h3>
+              <p>
+                نصف دجاجة متبلة بالأعشاب والبهارات ومشوية حتى تصبح طرية ومليئة
+                بالنكهة.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="دجاج مشوي"
+            >
+              <img
+                src="/restaurants/grill-house/assets/grills/grilled-chicken.webp"
+                alt="دجاج مشوي"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">12,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="menu-section" id="burgers">
+        <div class="section-heading">
+          <h2>البرغر</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="burgers">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>برغر اللحم الكلاسيكي</h3>
+              <p>
+                قرص لحم بقري مشوي طازج مع الخس والطماطم والمخلل وصلصتنا الخاصة.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="برغر اللحم الكلاسيكي"
+            >
+              <img
+                src="/restaurants/grill-house/assets/burgers/classic-burger.webp"
+                alt="برغر اللحم الكلاسيكي"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">8,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>برغر باربكيو</h3>
+              <p>
+                قرص لحم مشوي مغطى بصلصة الباربكيو المدخنة وحلقات البصل المقرمشة.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="برغر باربكيو"
+            >
+              <img
+                src="/restaurants/grill-house/assets/burgers/bbq-burger.webp"
+                alt="برغر باربكيو"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">9,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>برغر الدجاج المقرمش</h3>
+              <p>صدر دجاج مقرمش مقلي مع صلصة خاصة وخس طازج داخل خبز طري.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="برغر الدجاج المقرمش"
+            >
+              <img
+                src="/restaurants/grill-house/assets/burgers/crispy-chicken-burger.webp"
+                alt="برغر الدجاج المقرمش"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">8,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>دبل تشيز برغر</h3>
+              <p>
+                طبقتان من اللحم البقري مع طبقتين من الجبن الذائب وصلصتنا
+                المميزة.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="دبل تشيز برغر"
+            >
+              <img
+                src="/restaurants/grill-house/assets/burgers/double-cheese-burger.webp"
+                alt="دبل تشيز برغر"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">12,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="menu-section" id="pizza">
+        <div class="section-heading">
+          <h2>البيتزا</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="pizza">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>بيتزا مارغريتا</h3>
+              <p>
+                عجينة رقيقة مقرمشة مع صلصة الطماطم الطازجة وجبن الموزاريلا
+                والريحان.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="بيتزا مارغريتا"
+            >
+              <img
+                src="/restaurants/grill-house/assets/pizza/margherita-pizza.webp"
+                alt="بيتزا مارغريتا"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">8,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>بيتزا بيبروني</h3>
+              <p>
+                بيتزا كلاسيكية مغطاة بشرائح البيبروني وجبن الموزاريلا الذائب.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="بيتزا بيبروني"
+            >
+              <img
+                src="/restaurants/grill-house/assets/pizza/pepperoni-pizza.webp"
+                alt="بيتزا بيبروني"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">10,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>بيتزا دجاج باربكيو</h3>
+              <p>
+                قطع دجاج مشوي مع صلصة الباربكيو والبصل الأحمر وجبن الموزاريلا.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="بيتزا دجاج باربكيو"
+            >
+              <img
+                src="/restaurants/grill-house/assets/pizza/chicken-pizza.webp"
+                alt="بيتزا دجاج باربكيو"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">12,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>بيتزا أربع أجبان</h3>
+              <p>
+                مزيج غني من أربعة أنواع من الجبن الذائب فوق عجينة طازجة ومقرمشة.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="بيتزا أربع أجبان"
+            >
+              <img
+                src="/restaurants/grill-house/assets/pizza/four-cheese-pizza.webp"
+                alt="بيتزا أربع أجبان"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">14,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="menu-section" id="drinks">
+        <div class="section-heading">
+          <h2>المشروبات</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="drinks">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>موهيتو</h3>
+              <p>مشروب منعش بالليمون والنعناع الطازج مع لمسة من الصودا.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="موهيتو"
+            >
+              <img src="/restaurants/grill-house/assets/drinks/mojito.webp" alt="موهيتو" loading="lazy" />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">2,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>شاي مثلج</h3>
+              <p>شاي مثلج منعش بنكهة طبيعية يقدم بارداً.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="شاي مثلج"
+            >
+              <img
+                src="/restaurants/grill-house/assets/drinks/iced-tea.webp"
+                alt="شاي مثلج"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">2,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>مشروب غازي</h3>
+              <p>مشروبات غازية متنوعة تقدم باردة مع الثلج.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="مشروب غازي"
+            >
+              <img
+                src="/restaurants/grill-house/assets/drinks/pepsi.webp"
+                alt="مشروب غازي"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">1,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>مياه غازية</h3>
+              <p>مياه غازية منعشة تقدم باردة، بديل خفيف للمشروبات السكرية.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="مياه غازية"
+            >
+              <img
+                src="/restaurants/grill-house/assets/drinks/water.webp"
+                alt="مياه غازية"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">1,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="menu-section" id="desserts">
+        <div class="section-heading">
+          <h2>الحلويات</h2>
+          <span class="heading-line"></span>
+        </div>
+        <div class="menu-list" data-category="desserts">
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>كيك الشوكولاتة</h3>
+              <p>قطعة كيك غنية بالشوكولاتة الداكنة مع طبقة من الصوص الذائب.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="كيك الشوكولاتة"
+            >
+              <img
+                src="/restaurants/grill-house/assets/desserts/chocolate-cake.webp"
+                alt="كيك الشوكولاتة"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">5,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>تشيز كيك</h3>
+              <p>تشيز كيك ناعم وكريمي فوق قاعدة البسكويت مع صوص التوت.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="تشيز كيك"
+            >
+              <img
+                src="/restaurants/grill-house/assets/desserts/cheesecake.webp"
+                alt="تشيز كيك"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">6,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>براوني</h3>
+              <p>قطعة براوني دافئة وغنية بالشوكولاتة، تقدم مع كرة آيس كريم.</p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="براوني"
+            >
+              <img
+                src="/restaurants/grill-house/assets/desserts/brownie.webp"
+                alt="براوني"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">4,500 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+          <article class="menu-card">
+            <div class="menu-card-body">
+              <h3>آيس كريم</h3>
+              <p>
+                كرتان من الآيس كريم بنكهات متعددة، خيار مثالي لإنهاء وجبتكم.
+              </p>
+            </div>
+            <div
+              class="menu-card-image image-slot"
+              role="img"
+              aria-label="آيس كريم"
+            >
+              <img
+                src="/restaurants/grill-house/assets/desserts/ice-cream.webp"
+                alt="آيس كريم"
+                loading="lazy"
+              />
+            </div>
+            <div class="menu-card-price">
+              <span class="price">4,000 <span class="currency">د.ع</span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <section class="contact-section" id="contact">
+      <div class="container">
+        <h2>معلومات التواصل</h2>
+        <ul class="contact-list">
+          <li>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-pin"></use>
+            </svg>
+            <div><strong>الموقع</strong><span data-profile="address"> المنصور، بغداد</span></div>
+          </li>
+          <li>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-phone"></use>
+            </svg>
+            <div>
+              <strong>الهاتف</strong
+              ><span dir="ltr" class="ltr-value" data-profile="phone">+964 750 123 4567</span>
+            </div>
+          </li>
+          <li>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-clock"></use>
+            </svg>
+            <div>
+              <strong>ساعات العمل</strong
+              ><span data-profile="hours">12:00 ظهرًا – 12:00 منتصف الليل</span>
+            </div>
+          </li>
+        </ul>
+        <!-- data-social: filled from restaurants.socials by script.js; links
+             without a configured account are hidden. -->
+        <div class="social-row">
+          <a href="#" class="social-link" aria-label="فيسبوك" data-social="facebook"
+            ><svg class="icon" width="18" height="18">
+              <use href="#icon-facebook"></use></svg
+          ></a>
+          <a
+            href="https://www.instagram.com/kizuna.moments/"
+            class="social-link"
+            aria-label="إنستغرام"
+            data-social="instagram"
+            target="_blank"
+            rel="noopener noreferrer"
+            ><svg class="icon" width="18" height="18">
+              <use href="#icon-instagram"></use></svg
+          ></a>
+          <a href="#" class="social-link" aria-label="تيك توك" data-social="tiktok"
+            ><svg class="icon" width="18" height="18">
+              <use href="#icon-tiktok"></use></svg
+          ></a>
+          <a href="#" class="social-link" aria-label="واتساب" data-social="whatsapp" style="display: none"
+            ><svg class="icon" width="18" height="18">
+              <use href="#icon-whatsapp"></use></svg
+          ></a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p class="footer-brand" data-profile="name">GRILL HOUSE</p>
+        <p class="footer-copy">جميع الحقوق محفوظة © 2026</p>
+      </div>
+    </footer>
+
+    <div class="nav-drawer" id="nav-drawer" hidden>
+      <div class="nav-drawer-backdrop" data-drawer-close></div>
+      <div
+        class="nav-drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="القائمة الرئيسية"
+      >
+        <div class="nav-drawer-header">
+          <span class="nav-drawer-title">القائمة</span>
+          <button
+            class="nav-drawer-close"
+            type="button"
+            data-drawer-close
+            aria-label="إغلاق القائمة"
+          >
+            <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="nav-drawer-links" aria-label="التنقل الرئيسي">
+          <a href="#top" class="nav-drawer-link" data-drawer-close>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-home"></use>
+            </svg>
+            <span>الرئيسية</span>
+          </a>
+          <a href="#menu-items" class="nav-drawer-link" data-drawer-close>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-list"></use>
+            </svg>
+            <span>المنيو</span>
+          </a>
+          <a href="#hero" class="nav-drawer-link" data-drawer-close>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-info"></use>
+            </svg>
+            <span>عن المطعم</span>
+          </a>
+          <a href="#contact" class="nav-drawer-link" data-drawer-close>
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-contact"></use>
+            </svg>
+            <span>تواصل معنا</span>
+          </a>
+          <a
+            href="https://www.instagram.com/kizuna.moments/"
+            class="nav-drawer-link"
+            data-social="instagram"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="icon" width="20" height="20">
+              <use href="#icon-instagram"></use>
+            </svg>
+            <span>Instagram</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="image-lightbox" id="image-lightbox" hidden>
+      <div class="image-lightbox-backdrop" data-lightbox-close></div>
+      <div class="image-lightbox-content">
+        <button
+          class="image-lightbox-close"
+          type="button"
+          data-lightbox-close
+          aria-label="إغلاق المعاينة"
+        >
+          <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+          </svg>
+        </button>
+        <img class="image-lightbox-img" id="image-lightbox-img" src="" alt="" />
+      </div>
+    </div>
+
+    <script type="module" src="/restaurants/grill-house/script.js"></script>
+    <!-- "إدارة المطعم": a link to the dashboard (/grill-admin/) for signed-in
+         Grill House admins; /?admin opens the dashboard. Does nothing for
+         visitors. -->
+    <script type="module" src="/restaurants/grill-house/manage-menu.js"></script>
+
+  </body>
+</html>

@@ -1,0 +1,10 @@
+.vercel
+.env.local
+.env*.local
+node_modules/
+supabase/backups/
+supabase/.temp/
+.mcp.json
+.claude/
+# One-off maintenance script with account emails (already run).
+supabase/scripts/move_owner_to_grill_house.mjs

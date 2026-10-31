@@ -1,0 +1,9 @@
+# Not part of the deployed site.
+_archive/
+tests/
+supabase/
+README.md
+# Local tooling and environment files.
+.claude/
+.mcp.json
+.env*

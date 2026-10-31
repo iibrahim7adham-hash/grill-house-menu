@@ -1,0 +1,505 @@
+/* ==========================================================================
+   GRILL HOUSE — inline editing controls (admins only)
+   Loaded by manage-menu.js only for signed-in Grill House admins or the
+   ?admin sign-in. Visitors never download this file. Uses the page's own
+   palette from style.css (:root variables).
+   ========================================================================== */
+
+/* ---------- Header button ---------- */
+.manage-btn[aria-pressed="true"] {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fffaf3;
+}
+
+/* ---------- Buttons ---------- */
+.gh-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 40px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-ivory);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.gh-btn:hover,
+.gh-btn:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.gh-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.gh-btn-primary {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fffaf3;
+}
+
+.gh-btn-primary:hover,
+.gh-btn-primary:focus-visible {
+  background-color: var(--color-accent-dark);
+  border-color: var(--color-accent-dark);
+}
+
+.gh-btn-danger {
+  color: #ffb59b;
+  border-color: var(--color-accent-dark);
+}
+
+.gh-btn-small {
+  min-height: 34px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+}
+
+/* ---------- Editing bar ---------- */
+body.gh-editing {
+  padding-bottom: 5.5rem;
+}
+
+.gh-bar {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 60; /* above the sticky category bar (20), below drawer/lightbox (100) */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem var(--side-padding);
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  background-color: rgba(36, 28, 23, 0.96);
+  border-top: 1px solid var(--color-accent-dark);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.35);
+  color: var(--color-ivory);
+  font-family: var(--font-base);
+}
+
+.gh-bar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--color-accent-soft);
+}
+
+.gh-bar-title .icon {
+  color: var(--color-accent);
+}
+
+.gh-bar-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.gh-bar-done {
+  margin-inline-start: auto;
+}
+
+@media (max-width: 639px) {
+  .gh-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    padding-block-start: 0.45rem;
+  }
+
+  body.gh-editing {
+    padding-bottom: 7rem;
+  }
+}
+
+/* ---------- Toolbars on categories and cards ---------- */
+.gh-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.gh-category-tools {
+  margin-block: -0.4rem 0.9rem;
+}
+
+.gh-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 32px;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: var(--color-surface); /* solid: also sits on the light page background */
+  color: var(--color-ivory);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gh-tool:hover,
+.gh-tool:focus-visible {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.gh-tool[aria-pressed="true"] {
+  background-color: #6a4a2c;
+  border-color: var(--color-accent);
+}
+
+.gh-tool[aria-pressed="false"] {
+  border-style: dashed;
+  color: var(--color-accent-soft);
+}
+
+.gh-tool-danger {
+  color: #ffb59b;
+}
+
+.gh-tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gh-flip {
+  transform: rotate(180deg);
+}
+
+/* ---------- Editable cards ---------- */
+.gh-card {
+  flex-wrap: wrap;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.gh-card:hover {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* Inside the card the image opens the editor, not the lightbox. */
+.gh-card .menu-card-image img {
+  cursor: pointer;
+}
+
+.gh-item-tools {
+  flex: 1 0 100%;
+  padding-block-start: 0.5rem;
+  border-top: 1px dashed var(--color-border);
+}
+
+/* Hidden from visitors: dimmed, with a badge. Toolbars stay readable. */
+.gh-card.gh-is-hidden > :not(.gh-tools),
+.gh-section.gh-is-hidden .section-heading h2 {
+  opacity: 0.55;
+}
+
+.gh-card.gh-is-hidden .gh-badge {
+  opacity: 1;
+}
+
+.category-link.gh-is-hidden {
+  opacity: 0.5;
+}
+
+.gh-badge {
+  display: inline-block;
+  margin-inline-start: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border: 1px dashed var(--color-accent-soft);
+  border-radius: 999px;
+  color: var(--color-accent-soft);
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.menu-card-body .gh-badge {
+  align-self: flex-start;
+  margin-inline-start: 0;
+}
+
+/* ---------- "Add" buttons ---------- */
+.gh-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 84px;
+  padding: 0.75rem;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-accent-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gh-add:hover,
+.gh-add:focus-visible {
+  border-color: var(--color-accent);
+  color: var(--color-ivory);
+  outline: none;
+}
+
+.gh-add-section {
+  margin-block: 0.5rem 1.5rem;
+}
+
+/* One change at a time: controls wait while something is saving. */
+body.gh-busy {
+  cursor: progress;
+}
+
+body.gh-busy .gh-tools,
+body.gh-busy .gh-add,
+body.gh-busy .gh-card,
+body.gh-busy .gh-bar-actions {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* ---------- Dialogs ---------- */
+.gh-dialog {
+  width: min(36rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  padding: 1.1rem 1.2rem 1.2rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background-color: var(--color-surface);
+  color: var(--color-ivory);
+  font-family: var(--font-base);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.gh-dialog-narrow {
+  width: min(26rem, calc(100vw - 1.5rem));
+}
+
+.gh-dialog::backdrop {
+  background-color: rgba(20, 14, 8, 0.65);
+}
+
+.gh-dialog-title {
+  margin: 0 0 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.gh-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.gh-muted {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.gh-field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.gh-field label,
+.gh-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.gh-field input,
+.gh-field select,
+.gh-field textarea {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid #6b6d52;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-ivory);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px; /* no zoom on focus in mobile Safari */
+}
+
+.gh-field textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+.gh-field input:focus,
+.gh-field select:focus,
+.gh-field textarea:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.gh-field [aria-invalid="true"] {
+  border-color: #e0623a;
+  box-shadow: 0 0 0 2px rgba(224, 98, 58, 0.35);
+}
+
+.gh-field input:disabled {
+  opacity: 0.5;
+}
+
+.gh-field-check {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 0.5rem;
+}
+
+.gh-field-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-accent);
+}
+
+.gh-field-check .gh-hint {
+  grid-column: 1 / -1;
+}
+
+.gh-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.gh-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+@media (min-width: 520px) {
+  .gh-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gh-image-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gh-image-actions {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.gh-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.gh-image-preview {
+  border: 2px solid var(--color-border);
+}
+
+.gh-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.gh-alert {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #e0623a;
+  border-radius: var(--radius-sm);
+  background-color: rgba(224, 98, 58, 0.15);
+  color: #ffd9c9;
+  font-size: 0.85rem;
+}
+
+.gh-alert-success {
+  border-color: #7fae6a;
+  background-color: rgba(127, 174, 106, 0.15);
+  color: #dff0d4;
+}
+
+.gh-alert[hidden] {
+  display: none;
+}
+
+.gh-confirm-text {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.gh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-block-start: 0.25rem;
+}
+
+.gh-actions-start {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-end: auto;
+}
+
+/* ---------- Status message ---------- */
+.gh-toast {
+  position: fixed;
+  inset-inline: 1rem;
+  inset-block-end: 6rem;
+  z-index: 70;
+  max-width: 28rem;
+  margin-inline: auto;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: #241c17;
+  color: var(--color-ivory);
+  font-family: var(--font-base);
+  font-size: 0.88rem;
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  pointer-events: none; /* never blocks the menu underneath */
+}
+
+.gh-toast[hidden] {
+  display: none;
+}
+
+.gh-toast-error {
+  border-color: #e0623a;
+  color: #ffd9c9;
+}
+
+body:not(.gh-editing) .gh-toast {
+  inset-block-end: 1rem;
+}
+
+@media (max-width: 639px) {
+  .gh-toast {
+    inset-block-end: 8rem;
+  }
+}

@@ -1,0 +1,186 @@
+/* Owner dashboard additions. Base styles come from /admin/admin.css so both
+   dashboards share one look; nothing here changes the admin pages. */
+
+.admin-field select,
+.admin-field textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-ivory);
+  background-color: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-align: right;
+}
+
+.admin-field textarea {
+  resize: vertical;
+}
+
+.admin-field select:focus,
+.admin-field textarea:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.admin-field input[type="file"] {
+  min-height: 0;
+  padding: 0.45rem;
+  font-size: 0.9rem;
+}
+
+.admin-field [aria-invalid="true"] {
+  border-color: var(--color-error-text);
+}
+
+.owner-topbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+.owner-switcher {
+  min-width: 180px;
+}
+
+.owner-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.owner-check input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--color-accent);
+}
+
+/* ---------- Restaurant info ---------- */
+.owner-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.45rem 1rem;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.owner-info dt {
+  color: var(--color-text-muted);
+}
+
+.owner-info dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Lists ---------- */
+.owner-inline-form {
+  padding: 1rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.owner-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.owner-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  min-width: 0;
+}
+
+.owner-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.owner-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.owner-row-title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.owner-row-meta {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.owner-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.owner-item-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.owner-group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-accent-soft);
+}
+
+.owner-thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.owner-thumb-large {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+}
+
+.owner-item-dialog {
+  width: min(100% - 2rem, 520px);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.status-badge.is-unavailable {
+  color: var(--color-error-text);
+  border-color: #a8321e;
+}
+
+/* Sections that can be opened directly (/owner/#menu-management). */
+.owner-anchor {
+  scroll-margin-top: 1rem;
+}

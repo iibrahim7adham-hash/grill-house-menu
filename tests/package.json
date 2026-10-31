@@ -1,0 +1,13 @@
+{
+  "name": "restaurant-tests",
+  "private": true,
+  "type": "module",
+  "description": "Test-only dependencies. The site itself has no build step and no packages.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "puppeteer-core": "^24.0.0"
+  }
+}

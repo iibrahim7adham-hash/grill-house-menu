@@ -1,0 +1,8 @@
+/* Restaurant-specific styles. Each restaurant owns its design completely;
+   nothing here is shared with other restaurants or the admin dashboard.
+   url() paths are relative to this file, e.g. url("assets/hero.webp"). */
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+}
