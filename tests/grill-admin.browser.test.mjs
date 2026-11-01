@@ -655,19 +655,20 @@ test("restaurant settings: validated, saved through update_my_restaurant_profile
   assert.deepEqual(errors, []);
 });
 
-// The social links panel is hidden (SOCIALS_ENABLED in account-sections.js)
-// until the owner_update_restaurant_socials migration is applied live. These
-// two tests cover it again once it is re-enabled.
-const SOCIALS_HIDDEN = SKIP || "social links panel hidden until the owner_update_restaurant_socials migration is applied";
+// ---------- location and social links (restaurants.socials) ----------
 
-test("social links: hidden while the migration is not applied; the rest of the settings page works", { skip: SKIP }, async (t) => {
-  const { page, url, errors } = await signedIn(t);
+// Public menu links by data-social: [href, target, rel], or null when hidden.
+const publicLinks = (page, scope) => page.$$eval(scope + " [data-social]", (ls) => Object.fromEntries(ls.map((l) =>
+  [l.dataset.social, l.style.display === "none" ? null : [l.getAttribute("href"), l.target, l.rel]])));
+
+test("links: hidden while the migration is not applied; the rest of the settings page works", { skip: SKIP }, async (t) => {
+  const { page, url, fake, errors } = await signedIn(t, { socialsFunction: false });
   await go(page, "settings");
   await page.waitForSelector("#settings-form");
-  assert.equal(await page.$("#socials-form"), null, "no social links form");
-  assert.equal(await page.$("#socials-panel"), null, "no social links panel");
+  assert.equal(await page.$("#socials-panel"), null, "no links panel");
   assert.ok(!(await page.$eval("#section", (n) => n.textContent)).includes("null"), "nothing stray rendered");
   assert.equal(await page.$$eval("#section .panel", (p) => p.length), 2, "restaurant info + fixed data panels");
+  assert.ok(!fake.log.some((l) => l.path.includes("update_my_restaurant_socials") && l.status === 200), "probe changed nothing");
 
   // Links already stored keep showing on the public menu.
   const context = await browser.createBrowserContext();
@@ -678,52 +679,107 @@ test("social links: hidden while the migration is not applied; the rest of the s
   assert.deepEqual(errors, []);
 });
 
-test("social links: validated, saved to restaurants.socials, shown on the menu (hidden when empty)", { skip: SOCIALS_HIDDEN }, async (t) => {
+test("links: all five fields validated, saved, reloaded, and shown on the public menu", { skip: SKIP }, async (t) => {
   const { page, fake, url, errors } = await signedIn(t);
   await go(page, "settings");
   await page.waitForSelector("#socials-form");
+  assert.deepEqual(await page.$$eval("#socials-form input", (i) => i.map((n) => n.name)), ["maps", "instagram", "facebook", "tiktok", "whatsapp"]);
   assert.equal(await page.$eval("#socials-form input[name=instagram]", (i) => i.value), "https://www.instagram.com/kizuna.moments/");
 
   const save = async () => page.click("#socials-form button[type=submit]");
-  await fill(page, "#socials-form input[name=facebook]", "https://facebook.com.evil.io/x");
-  await save();
-  assert.match(await alertOf(page, "#socials-form"), /رابط Facebook غير صالح/);
-  await fill(page, "#socials-form input[name=facebook]", "facebook.com/grillhouse");
-  await fill(page, "#socials-form input[name=whatsapp]", "07501234567");
-  await save();
-  assert.match(await alertOf(page, "#socials-form"), /رقم WhatsApp غير صالح/);
-  assert.ok(!fake.log.some((l) => l.path.includes("update_my_restaurant_socials")), "nothing sent while invalid");
+  for (const [name, bad, message] of [
+    ["maps", "https://www.google.com/search?q=grill", /رابط خرائط Google غير صالح/],
+    ["facebook", "https://facebook.com.evil.io/x", /رابط Facebook غير صالح/],
+    ["whatsapp", "07501234567", /رقم WhatsApp غير صالح/],
+  ]) {
+    await fill(page, `#socials-form input[name=${name}]`, bad);
+    await save();
+    assert.match(await alertOf(page, "#socials-form"), message);
+    await fill(page, `#socials-form input[name=${name}]`, "");
+  }
+  assert.ok(!fake.log.some((l) => l.path.includes("update_my_restaurant_socials") && l.status === 200), "nothing saved while invalid");
 
+  await fill(page, "#socials-form input[name=maps]", "maps.app.goo.gl/GrillHouse123");
+  await fill(page, "#socials-form input[name=instagram]", "instagram.com/grillhouse");
+  await fill(page, "#socials-form input[name=facebook]", "facebook.com/grillhouse");
+  await fill(page, "#socials-form input[name=tiktok]", "https://www.tiktok.com/@grillhouse");
   await fill(page, "#socials-form input[name=whatsapp]", "00964 750 123 4567");
   await save();
   await page.waitForSelector("#socials-form .alert-success:not([hidden])");
   const r = fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID);
-  assert.deepEqual(r.socials, { instagram: "https://www.instagram.com/kizuna.moments", facebook: "https://facebook.com/grillhouse", whatsapp: "+9647501234567" });
-  assert.equal(r.name, "Grill House", "other settings untouched");
+  const expected = { maps: "https://maps.app.goo.gl/GrillHouse123", instagram: "https://instagram.com/grillhouse",
+    facebook: "https://facebook.com/grillhouse", tiktok: "https://www.tiktok.com/@grillhouse", whatsapp: "+9647501234567" };
+  assert.deepEqual(r.socials, expected);
+  assert.deepEqual([r.name, r.phone, r.address], ["Grill House", "+964 750 123 4567", "المنصور، بغداد"], "other settings untouched");
 
+  // Loaded back: a fresh page shows the stored values.
+  await page.reload({ waitUntil: "networkidle0" });
+  await page.waitForSelector("#socials-form");
+  assert.deepEqual(await page.$$eval("#socials-form input", (i) => Object.fromEntries(i.map((n) => [n.name, n.value]))), expected);
+
+  // Public menu: icons, WhatsApp chat button and Google Maps button.
   const context = await browser.createBrowserContext();
   const visitor = await context.newPage();
   await visitor.goto(url + "/", { waitUntil: "networkidle0" });
-  const links = await visitor.$$eval(".social-row [data-social]", (ls) => Object.fromEntries(ls.map((l) =>
-    [l.dataset.social, l.style.display === "none" ? null : [l.getAttribute("href"), l.target, l.rel]])));
-  assert.deepEqual(links, {
-    facebook: ["https://facebook.com/grillhouse", "_blank", "noopener noreferrer"],
-    instagram: ["https://www.instagram.com/kizuna.moments", "_blank", "noopener noreferrer"],
-    tiktok: null,
-    whatsapp: ["https://wa.me/9647501234567", "_blank", "noopener noreferrer"],
+  const tab = ["_blank", "noopener noreferrer"];
+  assert.deepEqual(await publicLinks(visitor, ".social-row"), {
+    facebook: ["https://facebook.com/grillhouse", ...tab], instagram: ["https://instagram.com/grillhouse", ...tab],
+    tiktok: ["https://www.tiktok.com/@grillhouse", ...tab], whatsapp: ["https://wa.me/9647501234567", ...tab],
   });
+  assert.deepEqual(await publicLinks(visitor, ".contact-actions"), {
+    maps: ["https://maps.app.goo.gl/GrillHouse123", ...tab], whatsapp: ["https://wa.me/9647501234567", ...tab],
+  });
+  assert.deepEqual(await visitor.$$eval(".contact-actions a", (a) => a.map((n) => n.textContent.trim())), ["الموقع على الخريطة", "تواصل عبر واتساب"]);
+  assert.equal(await visitor.$eval(".contact-actions", (n) => n.style.display), "");
+  assert.equal(await visitor.$eval('#nav-drawer [data-social="instagram"]', (l) => l.getAttribute("href")), "https://instagram.com/grillhouse");
   await context.close();
   assert.deepEqual(errors, []);
 });
 
-test("social links: before the migration, saving reports that it is not enabled", { skip: SOCIALS_HIDDEN }, async (t) => {
-  const { page, fake } = await signedIn(t, { socialsFunction: false });
+test("links: emptied fields are removed and hidden on the public menu", { skip: SKIP }, async (t) => {
+  const { page, fake, url } = await signedIn(t);
   await go(page, "settings");
-  await fill(page, "#socials-form input[name=tiktok]", "https://www.tiktok.com/@grillhouse");
+  await page.waitForSelector("#socials-form");
+  await fill(page, "#socials-form input[name=maps]", "https://www.google.com/maps/place/Grill+House/@33.31,44.36,17z");
+  await fill(page, "#socials-form input[name=instagram]", "");
   await page.click("#socials-form button[type=submit]");
-  await page.waitForSelector("#socials-form .alert:not([hidden]):not(.alert-success)");
-  assert.match(await alertOf(page, "#socials-form"), /owner_update_restaurant_socials/);
-  assert.equal(fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID).socials.tiktok, undefined);
+  await page.waitForSelector("#socials-form .alert-success:not([hidden])");
+  assert.deepEqual(fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID).socials,
+    { maps: "https://www.google.com/maps/place/Grill+House/@33.31,44.36,17z" });
+
+  const context = await browser.createBrowserContext();
+  const visitor = await context.newPage();
+  await visitor.goto(url + "/", { waitUntil: "networkidle0" });
+  assert.deepEqual(await publicLinks(visitor, ".social-row"), { facebook: null, instagram: null, tiktok: null, whatsapp: null });
+  assert.deepEqual(await publicLinks(visitor, ".contact-actions"),
+    { maps: ["https://www.google.com/maps/place/Grill+House/@33.31,44.36,17z", "_blank", "noopener noreferrer"], whatsapp: null });
+  assert.equal(await visitor.$eval('#nav-drawer [data-social="instagram"]', (l) => l.style.display), "none");
+
+  // Nothing at all: the button row takes no space.
+  await fill(page, "#socials-form input[name=maps]", "");
+  await page.click("#socials-form button[type=submit]");
+  await until(() => Object.keys(fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID).socials).length === 0, "all links removed");
+  await visitor.reload({ waitUntil: "networkidle0" });
+  assert.equal(await visitor.$eval(".contact-actions", (n) => n.style.display), "none");
+  await context.close();
+});
+
+test("links: non-members and visitors cannot change them (fake RLS)", { skip: SKIP }, async (t) => {
+  const { page, fake } = await open(t);
+  await page.waitForSelector("#view-login:not([hidden])");
+  const before = JSON.stringify(fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID).socials);
+  const attempt = (user) => page.evaluate(async (u, id) => {
+    const { supabase } = await import("/shared/supabase/client.js");
+    if (u) await supabase.auth.signInWithPassword(u);
+    else await supabase.auth.signOut();
+    const { error } = await supabase.rpc("update_my_restaurant_socials", { p_restaurant_id: id, p_instagram: null, p_tiktok: null,
+      p_facebook: null, p_whatsapp: null, p_maps: "https://maps.app.goo.gl/attacker" });
+    return error && error.code;
+  }, user, GRILL_HOUSE_ID);
+  assert.equal(await attempt(USERS.other), "42501", "owner of another restaurant");
+  assert.equal(await attempt(USERS.sysadmin), "42501", "system admin who is not a member");
+  assert.equal(await attempt(null), "42501", "signed-out visitor");
+  assert.equal(JSON.stringify(fake.db.restaurants.find((x) => x.id === GRILL_HOUSE_ID).socials), before, "nothing changed");
 });
 
 test("password: checked locally, then changed through Supabase Auth", { skip: SKIP }, async (t) => {

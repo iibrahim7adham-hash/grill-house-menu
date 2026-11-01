@@ -64,10 +64,13 @@ admins who are not members, are signed out. Sections: الرئيسية, الأق
 المنتجات, إعدادات المطعم, كلمة المرور (URL hash: #categories, #products, ...).
 
 Per-item hiding uses `supabase/migrations/20261031170000_menu_item_visibility.sql`
-(applied to the live project on 2026-10-31). Saving social links needs
-`supabase/migrations/20261031180000_owner_update_restaurant_socials.sql`
-(not applied yet); until then the social links panel is hidden
-(`SOCIALS_ENABLED` in `grill-admin/js/account-sections.js`).
+(applied to the live project on 2026-10-31). The location and social links
+(Google Maps, Instagram, Facebook, TikTok, WhatsApp; stored in
+`restaurants.socials`) need
+`supabase/migrations/20261101120000_owner_update_restaurant_links.sql`
+(not applied yet; it supersedes `20261031180000_owner_update_restaurant_socials.sql`,
+which need not be applied). The dashboard detects the function and hides the
+links panel until it exists.
 
 ## Local preview and tests
 

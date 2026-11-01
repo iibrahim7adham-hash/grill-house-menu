@@ -527,6 +527,14 @@ main#menu-items {
   unicode-bidi: isolate;
 }
 
+/* Location / WhatsApp buttons; each shows only when it is configured. */
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-block-start: 1.1rem;
+}
+
 .social-row {
   display: flex;
   gap: 0.6rem;

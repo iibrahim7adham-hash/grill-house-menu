@@ -5,7 +5,7 @@
 // changes only name, tagline, phone, address and hours.
 
 import { updateRestaurantProfile, updateRestaurantSocials, PROFILE_LIMITS, PROFILE_PHONE_PATTERN } from "/shared/data/restaurants.js";
-import { normalizeSocial, SOCIAL_PLATFORMS, SOCIAL_URL_MAX } from "/shared/utils/socials.js";
+import { normalizeSocial, SOCIAL_PLATFORMS, SOCIAL_URL_MAX, MAPS_URL_MAX } from "/shared/utils/socials.js";
 import { getMyRestaurants } from "/shared/auth/authorization.js";
 import { changePassword } from "/shared/auth/session.js";
 import { publicMenuUrl } from "/shared/utils/restaurant.js";
@@ -55,6 +55,9 @@ function submitButton(label) {
 }
 
 const SOCIALS = {
+  maps: { label: "الموقع على خرائط Google", placeholder: "https://maps.app.goo.gl/…",
+    invalid: "رابط خرائط Google غير صالح. انسخ رابط المشاركة من تطبيق خرائط Google، مثال: https://maps.app.goo.gl/abc123",
+    hint: "يظهر في المنيو زر «الموقع على الخريطة»." },
   instagram: { label: "Instagram", placeholder: "https://instagram.com/grillhouse",
     invalid: "رابط Instagram غير صالح. مثال: https://instagram.com/grillhouse" },
   tiktok: { label: "TikTok", placeholder: "https://www.tiktok.com/@grillhouse",
@@ -68,7 +71,7 @@ const SOCIALS = {
 
 function socialsErrorMessage(error) {
   if (error.code === "PGRST202") {
-    return "حفظ روابط التواصل غير مفعّل في قاعدة البيانات بعد (يتطلب تطبيق ترحيل owner_update_restaurant_socials).";
+    return "حفظ الموقع وروابط التواصل غير مفعّل في قاعدة البيانات بعد (يتطلب تطبيق ترحيل owner_update_restaurant_links).";
   }
   if (error.code === "42501" || error.code === "denied") return "لا تملك صلاحية تعديل معلومات هذا المطعم.";
   if (error.code === "22023") return "أحد الروابط غير صالح. يرجى مراجعة الحقول.";
@@ -77,18 +80,16 @@ function socialsErrorMessage(error) {
 
 // ---------- Social links ----------
 
-// Hidden until supabase/migrations/20261031180000_owner_update_restaurant_socials.sql
-// is applied to the live project; without it every save would fail. Set to
-// true once the migration is in place.
-const SOCIALS_ENABLED = false;
-
+// Shown only when the database has the links function
+// (supabase/migrations/20261101120000_owner_update_restaurant_links.sql),
+// detected at start-up as ctx.withLinks; without it every save would fail.
 function socialsPanel(ctx) {
   const stored = () => ctx.restaurant.socials || {};
   const inputs = {};
   const rows = SOCIAL_PLATFORMS.map((key) => {
     const f = field({ label: SOCIALS[key].label, name: key, icon: key, dir: "ltr",
       type: key === "whatsapp" ? "tel" : "url", inputMode: key === "whatsapp" ? "tel" : "url",
-      maxLength: SOCIAL_URL_MAX, placeholder: SOCIALS[key].placeholder,
+      maxLength: key === "maps" ? MAPS_URL_MAX : SOCIAL_URL_MAX, placeholder: SOCIALS[key].placeholder,
       value: stored()[key] || "", hint: SOCIALS[key].hint });
     inputs[key] = f.input;
     return f.row;
@@ -127,7 +128,7 @@ function socialsPanel(ctx) {
       }
       ctx.setRestaurant(data);
       SOCIAL_PLATFORMS.forEach((key) => { inputs[key].value = (data.socials || {})[key] || ""; });
-      setAlert(alert, "تم حفظ روابط التواصل. تظهر في المنيو مباشرة.", "success");
+      setAlert(alert, "تم حفظ الموقع وروابط التواصل. تظهر في المنيو مباشرة.", "success");
     } catch (error) {
       console.error(error);
       setAlert(alert, NETWORK);
@@ -138,7 +139,7 @@ function socialsPanel(ctx) {
   });
 
   return h("section", { className: "panel", id: "socials-panel" },
-    h("div", { className: "panel-head" }, h("h2", { className: "panel-title", textContent: "روابط التواصل الاجتماعي" })),
+    h("div", { className: "panel-head" }, h("h2", { className: "panel-title", textContent: "الموقع وروابط التواصل" })),
     form);
 }
 
@@ -209,7 +210,7 @@ export function renderSettings(ctx, root) {
 
   root.append(...[
     h("section", { className: "panel" }, h("div", { className: "panel-head" }, h("h2", { className: "panel-title", textContent: "معلومات المطعم" })), form),
-    SOCIALS_ENABLED ? socialsPanel(ctx) : null,
+    ctx.withLinks ? socialsPanel(ctx) : null,
     h("section", { className: "panel" },
       h("div", { className: "panel-head" }, h("h2", { className: "panel-title", textContent: "بيانات ثابتة" })),
       info,

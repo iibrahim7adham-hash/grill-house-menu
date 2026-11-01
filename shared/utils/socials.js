@@ -1,11 +1,11 @@
-// Social links of a restaurant (restaurants.socials, jsonb):
-//   { instagram, tiktok, facebook: "https://..." , whatsapp: "+9647501234567" }
+// Location and social links of a restaurant (restaurants.socials, jsonb):
+//   { maps, instagram, tiktok, facebook: "https://..." , whatsapp: "+9647501234567" }
 //
 // Used by the dashboard (to validate before saving) and by the public menu
 // (to build links). The database function update_my_restaurant_socials()
 // repeats the same rules, because the browser can be bypassed.
 
-export const SOCIAL_PLATFORMS = ["instagram", "tiktok", "facebook", "whatsapp"];
+export const SOCIAL_PLATFORMS = ["maps", "instagram", "facebook", "tiktok", "whatsapp"];
 
 // Accepted hosts per platform; links always use https.
 const HOSTS = {
@@ -16,6 +16,41 @@ const HOSTS = {
 const PATH_RE = /^\/[A-Za-z0-9._~@%/+-]+$/;   // a profile path, no query or fragment
 const PHONE_RE = /^\+[1-9][0-9]{7,14}$/;      // E.164: + country code and number
 export const SOCIAL_URL_MAX = 200;
+
+// Google Maps links: a place / share link, optionally with a query
+// (?q=..., coordinates). Non-ASCII text arrives percent-encoded.
+//   https://www.google.com/maps/place/...   https://maps.google.com/?q=...
+//   https://maps.app.goo.gl/<id>           https://goo.gl/maps/<id>
+export const MAPS_URL_MAX = 500;
+const MAPS_PATH_RE = /^[A-Za-z0-9._~@%/+,!:=*()-]*$/;
+const MAPS_QUERY_RE = /^(\?[A-Za-z0-9._~@%/+,!:=&*()-]*)?$/;
+const MAPS_HOSTS = {
+  "google.com": /^\/maps(\/|$)/,
+  "www.google.com": /^\/maps(\/|$)/,
+  "maps.google.com": /^/,
+  "maps.app.goo.gl": /^\/./,
+  "goo.gl": /^\/maps\/./,
+};
+
+function normalizeMaps(text) {
+  if (text.length > MAPS_URL_MAX) return { error: "invalid" };
+  let url;
+  try {
+    url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(text) ? text : "https://" + text);
+  } catch {
+    return { error: "invalid" };
+  }
+  const host = url.hostname.toLowerCase();
+  const path = url.pathname.replace(/\/+$/, "");
+  const query = url.search === "?" ? "" : url.search;
+  if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.port
+    || !MAPS_HOSTS[host] || !MAPS_HOSTS[host].test(path) || !MAPS_PATH_RE.test(path) || !MAPS_QUERY_RE.test(query)
+    || (!path && !query)) {
+    return { error: "invalid" };
+  }
+  const value = "https://" + host + path + query;
+  return value.length > MAPS_URL_MAX ? { error: "invalid" } : { value };
+}
 
 // Normalizes what an admin typed. Resolves to { value } (null when empty) or
 // { error: "invalid" }.
@@ -28,6 +63,7 @@ export function normalizeSocial(platform, raw) {
     const phone = text.replace(/[\s().-]/g, "").replace(/^00/, "+");
     return PHONE_RE.test(phone) ? { value: phone } : { error: "invalid" };
   }
+  if (platform === "maps") return normalizeMaps(text);
   if (!HOSTS[platform] || text.length > SOCIAL_URL_MAX) return { error: "invalid" };
   let url;
   try {

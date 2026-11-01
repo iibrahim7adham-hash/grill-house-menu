@@ -356,6 +356,11 @@ function applySocials(socials, socialHref) {
     }
     link.style.display = href ? "" : "none";
   });
+  // The location / WhatsApp button row takes no space when both are hidden.
+  slice(document.querySelectorAll(".contact-actions")).forEach(function (row) {
+    var any = slice(row.querySelectorAll("[data-social]")).some(function (link) { return link.style.display !== "none"; });
+    row.style.display = any ? "" : "none";
+  });
 }
 
 function applyProfile(restaurant, socialHref) {

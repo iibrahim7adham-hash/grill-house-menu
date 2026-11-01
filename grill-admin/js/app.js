@@ -13,6 +13,7 @@ import { supabase } from "/shared/supabase/client.js";
 import { getVerifiedUser, hasStoredSession, signIn, signOut, signInErrorReason } from "/shared/auth/session.js";
 import { getRestaurantAccess } from "/shared/auth/restaurant-access.js";
 import { listCategories, listMenuItems, supportsItemVisibility } from "/shared/data/menu.js";
+import { supportsRestaurantLinks } from "/shared/data/restaurants.js";
 import { h, icon, setAlert, toast, closeAllDialogs } from "./ui.js";
 import { errorMessage, NETWORK } from "./errors.js";
 import { renderCategories, renderProducts } from "./menu-sections.js";
@@ -81,6 +82,7 @@ const ctx = {
   categories: [],
   items: [],
   withVisibility: false,
+  withLinks: false,        // location/social links function present (migration applied)
   loaded: false,           // true once categories and items were read
   reload,
   run,
@@ -141,10 +143,12 @@ async function enterApp(access) {
   showView("app");
   el.section.replaceChildren(h("p", { className: "muted", textContent: "جارٍ تحميل البيانات…" }));
   try {
-    ctx.withVisibility = await withTimeout(supportsItemVisibility(supabase));
+    [ctx.withVisibility, ctx.withLinks] = await withTimeout(Promise.all([
+      supportsItemVisibility(supabase), supportsRestaurantLinks(supabase)]));
   } catch (error) {
     console.error(error);
     ctx.withVisibility = false;
+    ctx.withLinks = false;
   }
   try {
     await withTimeout(reload());
